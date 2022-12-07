@@ -108,8 +108,10 @@ class SberCatClient:
         if response.status_code >= 400:
             try:
                 data = response.json()
-                if data.get("employee_is_working"):
+                if (code := data.get("code")) == "employee_is_working":
                     print("Kotan already works!")
+                elif code == "employee_not_charged":
+                    print("Kotan is not charged!")
                 return data
             except Exception:
                 print(f"Something went wrong! Error:\n{response.text}")
@@ -143,8 +145,11 @@ class SberCatClient:
             if response.status_code >= 400:
                 try:
                     data = response.json()
-                    if data.get("employee_is_working"):
+                    if (code := data.get("code")) == "employee_is_working":
                         print("Kotan already works!")
+                    elif code == "employee_not_charged":
+                        print("Kotan is not charged!")
+
                     return data
                 except Exception:
                     print(f"Something went wrong! Error:\n{response.text}")
