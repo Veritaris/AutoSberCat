@@ -13,6 +13,7 @@ poetry config virtualenvs.in-project true
 poetry env use 3.10
 source .venv/bin/activate
 poetry install
+export $(cat .env | xargs)
 ```
 to install deps
 6. Run
@@ -28,3 +29,4 @@ Future improvements:
 - [ ] Pizza & wall sticker autobuy to speed up kotans
 - [ ] Money auto transfer to private card to increase money income with payday 
 - [ ] Add pool of clients to work over several accounts
+
