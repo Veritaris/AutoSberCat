@@ -1,0 +1,3 @@
+charge_for_coins () {
+    curl 'https://sbercat-shelter.ru-prod2.kts.studio/api/game/charge' -X 'POST' -H 'Accept: application/json, text/plain, */*' -H 'Content-Type: application/json' -H 'Origin: https://prod-app51443865-29a2eb668d65.pages-ac.vk-apps.com' -H 'Content-Length: 19' -H 'Accept-Language: en-GB,en;q=0.9' -H 'Host: sbercat-shelter.ru-prod2.kts.studio' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15' -H "Authorization: Bearer $1" -H 'Accept-Encoding: gzip, deflate, br' -H 'Connection: keep-alive' --data-binary "{\"employee_type\":$2}"
+}
