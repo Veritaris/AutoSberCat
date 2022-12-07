@@ -17,8 +17,9 @@ poetry install
 to install deps
 6. Run
 ```bash
-python -m app.SberCatClient and check if your kotany really updated
+python -m app.SberCatClient
 ```
+and check if your kotany really updated
 7. If yes - create kinda of cron or whatever you want to run this cript inside venv
 
 Future improvements:   
