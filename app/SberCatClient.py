@@ -106,13 +106,18 @@ class SberCatClient:
         )
 
         if response.status_code >= 400:
-            print(f"Something went wrong! Error:\n{response.text}")
             try:
-                return response.json()
+                data = response.json()
+                if data.get("employee_is_working"):
+                    print("Kotan already works!")
+                return data
             except Exception:
+                print(f"Something went wrong! Error:\n{response.text}")
                 return {"error": "yes"}
 
-        print(f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}")
+        print(
+            f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}"
+            )
         try:
             return response.json()
         except Exception:
@@ -136,13 +141,18 @@ class SberCatClient:
             )
 
             if response.status_code >= 400:
-                print(f"Something went wrong! Error:\n{response.text}")
                 try:
-                    return response.json()
+                    data = response.json()
+                    if data.get("employee_is_working"):
+                        print("Kotan already works!")
+                    return data
                 except Exception:
+                    print(f"Something went wrong! Error:\n{response.text}")
                     return {"error": "yes"}
 
-            print(f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}")
+            print(
+                f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}"
+                )
             try:
                 return response.json()
             except Exception:
