@@ -12,12 +12,16 @@ class act:
     method: str = "GET"
 
 
+# {"to":"personal","amount":2}
+# {"to":"business","amount":2}
+
 class SberCatClient:
     __app_endpoint: str = settings.sbercat_app_endpoint
     __known_endpoints = {
         "fetch_coins": act("game/take_coins", "POST"),
         "fetch": act("game/take_coins", "POST"),
         "charge_for_coins": act("game/charge", "POST"),
+        "transfer_to_personal": act("user/transfer_coins", "POST"),
         "charge": act("game/charge", "POST"),
         "get_work_info": act("game/get"),
         "get_employee_info": act("staff/info"),
