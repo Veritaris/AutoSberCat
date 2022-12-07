@@ -112,7 +112,7 @@ class SberCatClient:
             except Exception:
                 return {"error": "yes"}
 
-        print(f"Successfully fired action {self.current_action}! \nResponse: {response.text}")
+        print(f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}")
         try:
             return response.json()
         except Exception:
@@ -142,7 +142,7 @@ class SberCatClient:
                 except Exception:
                     return {"error": "yes"}
 
-            print(f"Successfully fired action {self.current_action}! \nResponse: {response.text}")
+            print(f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}")
             try:
                 return response.json()
             except Exception:
