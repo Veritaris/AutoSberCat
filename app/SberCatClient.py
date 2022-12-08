@@ -1,38 +1,45 @@
 import asyncio
+from typing import Optional
+
 import httpx
-import requests
+from requests import Session
 
 from app.config import settings
 from dataclasses import dataclass
+from requests import Response as SyncResponse
+from httpx import Response as AsyncResponse
+from app.i18n import i18n
 
 
 @dataclass
-class act:
+class point:
     url: str
     method: str = "GET"
 
 
-# {"to":"personal","amount":2}
-# {"to":"business","amount":2}
-
 class SberCatClient:
-    __app_endpoint: str = settings.sbercat_app_endpoint
+    __app_base_url: str = settings.sbercat_app_endpoint
     __known_endpoints = {
-        "fetch_coins": act("game/take_coins", "POST"),
-        "fetch": act("game/take_coins", "POST"),
-        "charge_for_coins": act("game/charge", "POST"),
-        "transfer_to_personal": act("user/transfer_coins", "POST"),
-        "charge": act("game/charge", "POST"),
-        "get_work_info": act("game/get"),
-        "get_employee_info": act("staff/info"),
+        "fetch_coins": point("game/take_coins", "POST"),
+        "fetch": point("game/take_coins", "POST"),
+        "charge_for_coins": point("game/charge", "POST"),
+        "charge": point("game/charge", "POST"),
+        "transfer_money": point("user/transfer_coins", "POST"),
+        "get_work_info": point("game/get"),
+        "get_new_employee_info": point("staff/info"),
     }
+    __action_type = {
+        "cat": ("game/take_coins", "game/charge"),
+        "money": ("user/transfer_coins",)
+    }
+
     worker_id: int
     current_action: str = ""
     method: str = "POST"
     token: str
     asynchronous: bool = True
 
-    def __init__(self, token: str, worker_id: int = None):
+    def __init__(self, token: str):
         self.worker_id = 0
         self.token = token
 
@@ -42,8 +49,6 @@ class SberCatClient:
 
         self.current_action = action.url
         self.method = action.method
-
-        print(f"item: {item}, action: {action}, method: {self.method}")
 
         if self.asynchronous:
             return self.__make_async_action
@@ -68,6 +73,7 @@ class SberCatClient:
                     break
 
     async def renew_all_cats(self):
+        self.set_async()
         info: dict = await self.get_work_info()
         employees = info["data"]["locations"][0]["employees"]
         employee_ids = [emp["type"] for emp in employees]
@@ -83,6 +89,9 @@ class SberCatClient:
                 if result.get("status") == "ok" or result.get("code") == "employee_already_charged":
                     break
 
+        if settings.do_money_autotransfer:
+            await self.transfer_coins()
+
     def set_async(self):
         self.asynchronous = True
 
@@ -93,39 +102,22 @@ class SberCatClient:
         data = {
             "employee_type": f"{self.worker_id}"
         }
-        session = requests.session()
-        session.headers.update(
-            {
-                "Authorization": f"Bearer {self.token}"
-            }
-        )
-        response = session.request(
-            method=self.method,
-            url=self.__app_endpoint.format(action=self.current_action),
-            data=data
-        )
 
-        if response.status_code >= 400:
-            try:
-                data = response.json()
-                if (code := data.get("code")) == "employee_is_working":
-                    print(f"Kotan {self.worker_id} already works!")
-                elif code == "employee_not_charged":
-                    print(f"Kotan {self.worker_id} is not charged!")
-                return data
-            except Exception:
-                print(f"Something went wrong! Error:\n{response.text}")
-                return {"error": "yes"}
-
-        print(
-            f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}"
+        with Session() as session:
+            session.headers.update(
+                {
+                    "Authorization": f"Bearer {self.token}"
+                }
             )
-        try:
-            return response.json()
-        except Exception:
-            return {"error": "yes"}
+            response = session.request(
+                method=self.method,
+                url=self.__app_base_url.format(action=self.current_action),
+                data=data
+            )
 
-    async def __make_async_action(self):
+        return self.process_response(response)
+
+    async def __make_async_action(self) -> dict:
         data = {
             "employee_type": f"{self.worker_id}"
         }
@@ -138,31 +130,84 @@ class SberCatClient:
             )
             response = await http_client.request(
                 method=self.method,
-                url=self.__app_endpoint.format(action=self.current_action),
+                url=self.__app_base_url.format(action=self.current_action),
                 data=data
             )
 
-            if response.status_code >= 400:
-                try:
-                    data = response.json()
-                    if (code := data.get("code")) == "employee_is_working":
-                        print(f"Kotan {self.worker_id} already works!")
-                    elif code == "employee_not_charged":
-                        print(f"Kotan {self.worker_id} is not charged!")
-                    return data
-                except Exception:
-                    print(f"Something went wrong! Error:\n{response.text}")
-                    return {"error": "yes"}
+        return self.process_response(response)
 
-            print(
-                f"Successfully fired action {self.current_action} for kotan {self.worker_id}! \nResponse: {response.text}"
-                )
+    def process_response(self, response: SyncResponse | AsyncResponse) -> dict:
+        if response.status_code >= 400:
             try:
-                return response.json()
+                data = response.json()
+
+                match (code := data.get("code")):
+                    case "employee_is_working":
+                        message = i18n("cat.already_working", id=self.worker_id)
+                    case "employee_not_charged":
+                        message = i18n("cat.not_charged", id=self.worker_id)
+                    case "not_enough_money":
+                        message = i18n("money.not_enough")
+                    case _:
+                        print(data)
+                        print(f"{response.url}, {response.headers}")
+                        message = i18n("unknown_error")
+
+                print(message)
+                return data
             except Exception:
                 return {"error": "yes"}
 
-    async def get_new_employee_info(self):
+        try:
+            data = response.json()
+        except Exception:
+            return {"error": "yes"}
+
+        cat = data.get("employee")
+        if cat is not None and self.current_action == "game/charge":
+            duration = cat.get("active_minutes_left", 0)
+            cat_id = cat.get("type", 0)
+            print(i18n("cat.will_work_for", id=cat_id, duration=duration))
+
+        return data
+
+    async def transfer_coins(self, to: str = "personal", amount: Optional[int] = None):
+        if to == "personal":
+            info: dict = await self.get_work_info()
+            money = info.get("data", {}).get("business_coins")
+            money_to_pay = sum(
+                [
+                    emp["salary"]
+                    for emp in info["data"]["locations"][0]["employees"]
+                    if emp["salary"] is not None
+                ]
+            )
+            amount = money - money_to_pay
+            if amount <= 0:
+                print(i18n("money.not_enough_to_payday", payday=money_to_pay, money=money))
+                return
+
+        data = {
+            "to": to,
+            "amount": amount
+        }
+
+        async with httpx.AsyncClient() as http_client:
+            http_client.headers.update(
+                {
+                    "Authorization": f"Bearer {self.token}"
+                }
+            )
+            action = self.__known_endpoints.get("transfer_money")
+            response = await http_client.request(
+                method=action.method,
+                url=self.__app_base_url.format(action=action.url),
+                data=data
+            )
+
+        return self.process_response(response)
+
+    def transfer_coins_sync(self, to: str = "business", amount: int = 0):
         pass
 
 

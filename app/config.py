@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     app_port: int = env.int("APP_PORT", default=14880)
     superkey: str = env.str("SUPERKEY", default="kakdela???")
 
+    do_money_autotransfer: bool = env.bool("DO_MONEY_AUTOTRANSFER", default=True)
+    locale: str = env.str("LOCALE", default="ru")
+
     base_dir: str = pathlib.Path.joinpath(pathlib.Path.cwd()).__str__()
 
     if not os.path.exists(f"{base_dir}/logs"):
