@@ -90,8 +90,8 @@ class SberCatClient:
         max_money = 60
 
         for booster in boosters:
-            max_duration += self.__duration_boosters.get(booster, 0)
-            max_money += self.__money_boosters.get(booster, 0)
+            max_duration += self.__duration_boosters.get(booster["type"], 0)
+            max_money += self.__money_boosters.get(booster["type"], 0)
 
         for emp_id in employee_ids:
             self.worker_id = emp_id
