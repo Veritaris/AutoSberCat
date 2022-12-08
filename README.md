@@ -27,6 +27,6 @@ Future improvements:
 - [ ] Background scheduler based on celery / threads
 - [ ] Autobuy of new employers if available 
 - [ ] Pizza & wall sticker autobuy to speed up kotans
-- [ ] Money auto transfer to private card to increase money income with payday
+- [x] Money auto transfer to private card to increase money income with payday
 - [ ] Add pool of clients to work over several accounts
 - [ ] Auto token renew by vk oauth
