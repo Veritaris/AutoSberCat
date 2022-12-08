@@ -1,13 +1,12 @@
-import asyncio
+from dataclasses import dataclass
 from typing import Optional
 
 import httpx
+from httpx import Response as AsyncResponse
+from requests import Response as SyncResponse
 from requests import Session
 
 from app.config import settings
-from dataclasses import dataclass
-from requests import Response as SyncResponse
-from httpx import Response as AsyncResponse
 from app.i18n import i18n
 
 
@@ -82,11 +81,11 @@ class SberCatClient:
             self.worker_id = emp_id
             for i in range(5):
                 result = await self.fetch_coins()
-                if result.get("status") == "ok" or result.get("code") == "employee_is_working":
+                if result.get("code") == "employee_is_working":
                     break
 
                 result = await self.charge_for_coins()
-                if result.get("status") == "ok" or result.get("code") == "employee_already_charged":
+                if result.get("code") == "employee_already_charged":
                     break
 
         if settings.do_money_autotransfer:
@@ -206,11 +205,3 @@ class SberCatClient:
             )
 
         return self.process_response(response)
-
-    def transfer_coins_sync(self, to: str = "business", amount: int = 0):
-        pass
-
-
-if __name__ == "__main__":
-    client = SberCatClient(token=settings.sbercat_app_token)
-    asyncio.run(client.renew_all_cats())

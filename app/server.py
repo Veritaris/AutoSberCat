@@ -7,8 +7,8 @@ from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi_sessions.frontends.implementations import CookieParameters, SessionCookie
 
 from app import users
+from app.SberCatClient import SberCatClient
 from app.config import settings
-from app.main import SberCatClient
 from app.middleware import BasicVerifier
 from app.models import SessionData
 
@@ -35,11 +35,11 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello Chel"}
+    return {"message": "Hello, Chel"}
 
 
 @app.post("/register/{token}")
-async def create_session(token: str):
+async def register(token: str):
 
     session = uuid4()
     data = SessionData(sbercat_token=token)
@@ -62,14 +62,14 @@ async def create_session(token: str):
 
 
 @app.get("/me", dependencies=[Depends(cookie)])
-async def whoami(session_data: SessionData = Depends(verifier)):
+async def me(session_data: SessionData = Depends(verifier)):
     sbercat = SberCatClient(token=session_data.sbercat_token)
     info = await sbercat.get_work_info()
     return Response(content=json.dumps(info), media_type="application/json")
 
 
-@app.post("/stop_using")
-async def del_session(response: Response, session_id: UUID = Depends(cookie)):
+@app.post("/stop_usage")
+async def stop_usage(response: Response, session_id: UUID = Depends(cookie)):
     await users.delete_user(backend.data.get(session_id))
     await backend.delete(session_id)
     cookie.delete_from_response(response)
@@ -77,7 +77,7 @@ async def del_session(response: Response, session_id: UUID = Depends(cookie)):
 
 
 @app.get("/all/{superkey}")
-async def del_session(superkey: str, response: Response, session_id: UUID = Depends(cookie)):
+async def list_all_tokens(superkey: str):
     if superkey != settings.superkey:
         return Response(status_code=1488)
 
@@ -88,6 +88,14 @@ async def del_session(superkey: str, response: Response, session_id: UUID = Depe
         status_code=200,
         content=json.dumps({"tokens": tokens})
     )
+
+
+@app.get("/getcats", dependencies=[Depends(cookie)])
+async def get_cats(session_data: SessionData = Depends(verifier)):
+    sbercat = SberCatClient(token=session_data.sbercat_token)
+    info = await sbercat.get_work_info()
+
+    return
 
 
 if __name__ == "__main__":
