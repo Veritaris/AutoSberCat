@@ -1,10 +1,11 @@
 {
   "cat.already_working": "Котан {id} уже работает",
   "cat.not_charged": "Котан {id} не заряжен на работу",
+  "cat.will_work_for": "Котан {id} заряжен на {duration} минут",
+  "cat.coins_fetch": "Котан {id} заработал компании {amount} монет",
   "money.account": "На личном счёте: {private_money}, на бизнес-счёте: {business_money}",
   "money.transferred": "Переведено {amount} монет с {from_account} на {to_account} счёт",
   "money.not_enough": "Недостаточно денег для перевода!",
   "money.not_enough_to_payday": "Недостаточно денег для перевода! Нужно выплатить сотрудникам {payday}, но на счету только {money}",
-  "unknown_error": "Неизвестное исключение",
-  "cat.will_work_for": "Котан {id} заряжен на {duration} минут"
+  "unknown_error": "Неизвестное исключение"
 }

@@ -27,6 +27,14 @@ class SberCatClient:
         "get_work_info": point("game/get"),
         "get_new_employee_info": point("staff/info"),
     }
+    __duration_boosters = {
+        "coffee_point": 20,
+        "plant": 10,
+    }
+    __money_boosters = {
+        "coffee_point": 10,
+        "plant": 5,
+    }
     __action_type = {
         "cat": ("game/take_coins", "game/charge"),
         "money": ("user/transfer_coins",)
@@ -74,8 +82,16 @@ class SberCatClient:
     async def renew_all_cats(self):
         self.set_async()
         info: dict = await self.get_work_info()
-        employees = info["data"]["locations"][0]["employees"]
+        location = info["data"]["locations"][0]
+        employees = location["employees"]
         employee_ids = [emp["type"] for emp in employees]
+        boosters = location["permanent_boosters"]
+        max_duration = 120
+        max_money = 60
+
+        for booster in boosters:
+            max_duration += self.__duration_boosters.get(booster, 0)
+            max_money += self.__money_boosters.get(booster, 0)
 
         for emp_id in employee_ids:
             self.worker_id = emp_id
@@ -83,10 +99,14 @@ class SberCatClient:
                 result = await self.fetch_coins()
                 if result.get("code") == "employee_is_working":
                     break
+                if result.get("status") == "ok":
+                    print(i18n("cat.coins_fetch", id=emp_id, amount=max_money))
 
                 result = await self.charge_for_coins()
                 if result.get("code") == "employee_already_charged":
                     break
+                if result.get("status") == "ok":
+                    print(i18n("cat.will_work_for", id=emp_id, duration=max_duration))
 
         if settings.do_money_autotransfer:
             await self.transfer_coins()
