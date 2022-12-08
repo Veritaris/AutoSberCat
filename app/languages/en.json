@@ -1,5 +1,5 @@
 {
-  "cat.already_working": "Kotan {id} already works",
+  "cat.already_working": "Kotan {id} still works",
   "cat.not_charged": "Kotan {id} is not charged",
   "cat.coins_fetch": "Kotan {id} earned {amount} for company",
   "cat.will_work_for": "Kotan {id} charged for {duration} minutes",

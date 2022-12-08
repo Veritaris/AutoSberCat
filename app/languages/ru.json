@@ -1,5 +1,5 @@
 {
-  "cat.already_working": "Котан {id} уже работает",
+  "cat.already_working": "Котан {id} ещё работает",
   "cat.not_charged": "Котан {id} не заряжен на работу",
   "cat.will_work_for": "Котан {id} заряжен на {duration} минут",
   "cat.coins_fetch": "Котан {id} заработал компании {amount} монет",
