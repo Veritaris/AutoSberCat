@@ -8,6 +8,7 @@ from requests import Session
 
 from app.config import settings
 from app.i18n import i18n
+from app.models import Employee, OfficeData
 
 
 @dataclass
@@ -81,17 +82,22 @@ class SberCatClient:
 
     async def renew_all_cats(self):
         self.set_async()
-        info: dict = await self.get_work_info()
-        location = info["data"]["locations"][0]
-        employees = location["employees"]
-        employee_ids = [emp["type"] for emp in employees]
-        boosters = location["permanent_boosters"]
+        office_info: OfficeData = OfficeData(**(await self.get_work_info()).get("data"))
+        locations = office_info.locations
+
+        employee_ids = [
+            emp.type
+            for loc in office_info.locations
+            for emp in loc.employees
+        ]
+
+        boosters = locations[0].permanent_boosters
         max_duration = 120
         max_money = 60
 
         for booster in boosters:
-            max_duration += self.__duration_boosters.get(booster["type"], 0)
-            max_money += self.__money_boosters.get(booster["type"], 0)
+            max_duration += self.__duration_boosters.get(booster.type, 0)
+            max_money += self.__money_boosters.get(booster.type, 0)
 
         for emp_id in employee_ids:
             self.worker_id = emp_id
@@ -155,7 +161,7 @@ class SberCatClient:
 
         return self.process_response(response)
 
-    def process_response(self, response: SyncResponse | AsyncResponse) -> dict:
+    def process_response(self, response: SyncResponse | AsyncResponse, *args, **kwargs) -> dict:
         if response.status_code >= 400:
             try:
                 data = response.json()
@@ -182,23 +188,24 @@ class SberCatClient:
         except Exception:
             return {"error": "yes"}
 
-        cat = data.get("employee")
+        cat = Employee(**data.get("employee"))
         if cat is not None and self.current_action == "game/charge":
-            duration = cat.get("active_minutes_left", 0)
-            cat_id = cat.get("type", 0)
+            duration = cat.active_minutes_left
+            cat_id = cat.type
             print(i18n("cat.will_work_for", id=cat_id, duration=duration))
 
         return data
 
     async def transfer_coins(self, to: str = "personal", amount: Optional[int] = None):
         if to == "personal":
-            info: dict = await self.get_work_info()
-            money = info.get("data", {}).get("business_coins")
+            office_info: OfficeData = OfficeData(**(await self.get_work_info()).get("data"))
+            money = office_info.business_coins
             money_to_pay = sum(
                 [
-                    emp["salary"]
-                    for emp in info["data"]["locations"][0]["employees"]
-                    if emp["salary"] is not None
+                    emp.salary
+                    for loc in office_info.locations
+                    for emp in loc.employees
+                    if emp.salary is not None
                 ]
             )
             amount = money - money_to_pay
