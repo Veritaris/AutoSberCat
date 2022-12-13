@@ -188,10 +188,10 @@ class SberCatClient:
         except Exception:
             return {"error": "yes"}
 
-        cat = Employee(**data.get("employee"))
+        cat = data.get("employee")
         if cat is not None and self.current_action == "game/charge":
-            duration = cat.active_minutes_left
-            cat_id = cat.type
+            duration = cat.get("active_minutes_left", 0)
+            cat_id = cat.get("type", 0)
             print(i18n("cat.will_work_for", id=cat_id, duration=duration))
 
         return data
