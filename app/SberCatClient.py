@@ -8,7 +8,7 @@ from requests import Session
 
 from app.config import settings
 from app.i18n import i18n
-from app.models import Employee, OfficeData
+from app.models import Employee, OfficeData, Rating
 
 
 @dataclass
@@ -27,6 +27,7 @@ class SberCatClient:
         "transfer_money": point("user/transfer_coins", "POST"),
         "get_work_info": point("game/get"),
         "get_new_employee_info": point("staff/info"),
+        "get_rating": point("user/rating", "POST", )
     }
     __duration_boosters = {
         "coffee_point": 20,
@@ -47,9 +48,10 @@ class SberCatClient:
     token: str
     asynchronous: bool = True
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, user_id: int):
         self.worker_id = 0
         self.token = token
+        self.user_id = user_id
 
     def __getattr__(self, item):
         if not (action := self.__known_endpoints.get(item)):
@@ -117,6 +119,9 @@ class SberCatClient:
         if settings.do_money_autotransfer:
             await self.transfer_coins()
 
+        rating = await self.get_rating()
+        print(i18n("cat.will_work_for", rating=rating))
+
     def set_async(self):
         self.asynchronous = True
 
@@ -160,6 +165,21 @@ class SberCatClient:
             )
 
         return self.process_response(response)
+
+    async def get_rating(self) -> int:
+        async with httpx.AsyncClient() as http_client:
+            http_client.headers.update(
+                {
+                    "Authorization": f"Bearer {self.token}"
+                }
+            )
+            response = await http_client.request(
+                method=self.method,
+                url=self.__app_base_url.format(action=self.current_action),
+                data={}
+            )
+        rating = Rating(**response.json())
+        return rating.get_current_user_rating()
 
     def process_response(self, response: SyncResponse | AsyncResponse, *args, **kwargs) -> dict:
         if response.status_code >= 400:
@@ -210,6 +230,8 @@ class SberCatClient:
             )
             amount = money - money_to_pay
             if amount <= 0:
+                if amount == 0:
+                    return
                 print(i18n("money.not_enough_to_payday", payday=money_to_pay, money=money))
                 return
 

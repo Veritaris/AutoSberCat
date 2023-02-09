@@ -7,5 +7,6 @@
   "money.transferred": "Переведено {amount} монет с {from_account} на {to_account} счёт",
   "money.not_enough": "Недостаточно денег для перевода!",
   "money.not_enough_to_payday": "Недостаточно денег для перевода! Нужно выплатить сотрудникам {payday}, но на счету только {money}",
-  "unknown_error": "Неизвестное исключение"
+  "unknown_error": "Неизвестное исключение",
+  "current_rating": "Текущий рейтинг: {rating}/100"
 }

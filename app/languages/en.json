@@ -7,5 +7,6 @@
   "money.transferred": "Transferred {amount} coins from {from_account} to {to_account} account",
   "money.not_enough": "Not enough money!",
   "money.not_enough_to_payday": "Недостаточно денег для перевода! Нужно выплатить сотрудникам {payday}, но на счету только {money}",
-  "unknown_error": "Unknown exception occurred"
+  "unknown_error": "Unknown exception occurred",
+  "current_rating": "Current rating is: {rating}/100"
 }

@@ -37,8 +37,28 @@ class Location(BaseModel):
     workplaces: List[Workplace]
 
 
+class User(BaseModel):
+    photo_100: str
+    id: int | str
+    total_coins: int
+    last_name: str
+    first_name: str
+
+
 class OfficeData(BaseModel):
     business_coins: int
     pizza_available: bool
     locations: List[Location]
     temporary_boosters: List
+
+
+class Rating(BaseModel):
+    status: str
+    data: List[User]
+    current_user: User
+
+    def get_current_user_rating(self):
+        return self.get_rating(self.current_user.id)
+
+    def get_rating(self, uid: int | str):
+        return next((index for (index, user) in enumerate(self.data) if user.id == uid), None)
