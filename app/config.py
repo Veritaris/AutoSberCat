@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     sbercat_app_token: str = env.str("SBERCAT_APP_TOKEN")
     sbercat_redis_table: str = env.str("SBERCAT_REDIS_TABLE", default="sbercat-autousers-list")
     sbercat_secret: str = env.str("SBERCAT_SECRET", default="")
+    user_id: int = env.int("USER_ID")
     redis_user: str = env.str("REDIS_USER", default="default")
     redis_pass: str = env.str("REDIS_PASS", default="")
     redis_host: str = env.str("REDIS_HOST", default="localhost")
