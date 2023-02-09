@@ -6,7 +6,8 @@
   "money.account": "Own account:{private_money}, business account: {business_money}",
   "money.transferred": "Transferred {amount} coins from {from_account} to {to_account} account",
   "money.not_enough": "Not enough money!",
-  "money.not_enough_to_payday": "Недостаточно денег для перевода! Нужно выплатить сотрудникам {payday}, но на счету только {money}",
+  "money.not_enough_to_payday": "Not enough money to transfer! Payday is {payday} but you have only {money}",
+  "money.fetched": "Fetched {amount} coins, balance is {balance}, business: {business_balance}, total: {total}",
   "unknown_error": "Unknown exception occurred",
   "current_rating": "Current rating is: {rating}/100"
 }

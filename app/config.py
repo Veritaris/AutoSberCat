@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     locale: str = env.str("LOCALE", default="ru")
 
     base_dir: str = pathlib.Path.joinpath(pathlib.Path.cwd()).__str__()
+    verbosity: int = env.int("VERBOSITY", default=1)
 
     if not os.path.exists(f"{base_dir}/logs"):
         os.mkdir(f"{base_dir}/logs")

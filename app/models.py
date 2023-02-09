@@ -52,13 +52,29 @@ class OfficeData(BaseModel):
     temporary_boosters: List
 
 
-class Rating(BaseModel):
-    status: str
-    data: List[User]
+class RatingData(BaseModel):
+    users: List[User]
     current_user: User
 
+
+class Rating(BaseModel):
+    status: str
+    data: RatingData
+
     def get_current_user_rating(self):
-        return self.get_rating(self.current_user.id)
+        return self.get_rating(self.data.current_user.id)
 
     def get_rating(self, uid: int | str):
-        return next((index for (index, user) in enumerate(self.data) if user.id == uid), None)
+        return next((index for (index, user) in enumerate(self.data.users) if user.id == uid), None)
+
+
+class DepositData(BaseModel):
+    personal_coins: int
+    percent: float
+    min_coins: int
+    interval_in_hours: int
+
+
+class Deposit(BaseModel):
+    status: str
+    data: DepositData

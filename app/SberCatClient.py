@@ -8,7 +8,7 @@ from requests import Session
 
 from app.config import settings
 from app.i18n import i18n
-from app.models import Employee, OfficeData, Rating
+from app.models import Deposit, Employee, OfficeData, Rating
 
 
 @dataclass
@@ -27,7 +27,8 @@ class SberCatClient:
         "transfer_money": point("user/transfer_coins", "POST"),
         "get_work_info": point("game/get"),
         "get_new_employee_info": point("staff/info"),
-        "get_rating": point("user/rating", "POST", )
+        "get_rating": point("user/rating", "POST", ),
+        "get_deposit": point("user/deposit"),
     }
     __duration_boosters = {
         "coffee_point": 20,
@@ -101,6 +102,7 @@ class SberCatClient:
             max_duration += self.__duration_boosters.get(booster.type, 0)
             max_money += self.__money_boosters.get(booster.type, 0)
 
+        fetched = 0
         for emp_id in employee_ids:
             self.worker_id = emp_id
             for i in range(5):
@@ -108,19 +110,33 @@ class SberCatClient:
                 if result.get("code") == "employee_is_working":
                     break
                 if result.get("status") == "ok":
-                    print(i18n("cat.coins_fetch", id=emp_id, amount=max_money))
+                    fetched += max_money
+                    if settings.verbosity > 1:
+                        print(i18n("cat.coins_fetch", id=emp_id, amount=max_money))
 
                 result = await self.charge_for_coins()
                 if result.get("code") == "employee_already_charged":
                     break
-                if result.get("status") == "ok":
+                if result.get("status") == "ok" and settings.verbosity > 1:
                     print(i18n("cat.will_work_for", id=emp_id, duration=max_duration))
 
         if settings.do_money_autotransfer:
             await self.transfer_coins()
 
-        rating = await self.get_rating()
-        print(i18n("cat.will_work_for", rating=rating))
+        rating = Rating(**await self.get_rating())
+        deposit = Deposit(**await self.get_deposit())
+        work_info = OfficeData(**(await self.get_work_info()).get("data"))
+        if settings.verbosity > 0:
+            print(
+                i18n(
+                    "money.fetched",
+                    amount=fetched,
+                    balance=deposit.data.personal_coins,
+                    business_balance=work_info.business_coins,
+                    total=deposit.data.personal_coins + work_info.business_coins
+                )
+            )
+            print(i18n("current_rating", rating=rating.get_current_user_rating()))
 
     def set_async(self):
         self.asynchronous = True
@@ -165,22 +181,6 @@ class SberCatClient:
             )
 
         return self.process_response(response)
-
-    async def get_rating(self) -> int:
-        async with httpx.AsyncClient() as http_client:
-            http_client.headers.update(
-                {
-                    "Authorization": f"Bearer {self.token}"
-                }
-            )
-            response = await http_client.request(
-                method=self.method,
-                url=self.__app_base_url.format(action=self.current_action),
-                data={}
-            )
-        print(response.json())
-        rating = Rating(**response.json())
-        return rating.get_current_user_rating()
 
     def process_response(self, response: SyncResponse | AsyncResponse, *args, **kwargs) -> dict:
         if response.status_code >= 400:
