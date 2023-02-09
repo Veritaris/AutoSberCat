@@ -178,6 +178,7 @@ class SberCatClient:
                 url=self.__app_base_url.format(action=self.current_action),
                 data={}
             )
+        print(response.json())
         rating = Rating(**response.json())
         return rating.get_current_user_rating()
 
